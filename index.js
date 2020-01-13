@@ -1,3 +1,4 @@
+import { createStore, combineReducers } from 'redux';
 import expect from 'expect';
 import deepFreeze from 'deep-freeze';
 
@@ -29,72 +30,55 @@ const todos = (state = [], action) => {
       ]
       case 'TOGGLE_TODO':
         return state.map(t => todo(t, action));
+      case 'SET_VISIBILITY_FILTER':
+        return todoVisibility(state, action)
       default:
         return state;
   }
 };
 
-const testAddTodo = () => {
-  const stateBefore = [];
-  const action = {
-    type: 'ADD_TODO',
-    id: 0,
-    text: 'Learn Redux'
-  };
-  const stateAfter = [
-    {
-      id: 0,
-      text: 'Learn Redux',
-      completed: false
-    }
-  ];
+const visibility = (state='SHOW_ALL', action) => {
+  switch(action.type) {
+    case 'SET_VISIBILITY_FILTER':
+      return action.filter
+    default:
+      return {...state}
+  }
+};
 
-  deepFreeze(stateBefore);
-  deepFreeze(action);
-
-  expect(
-    todos(stateBefore, action)
-  ).toEqual(stateAfter);
+const todoVisibility = (state=[], action) => {
+  switch(action.filter) {
+    case 'SHOW_ACTIVE':
+      return state.filter(todo => !todo.completed)
+    case 'SHOW_COMPLETED':
+      return state.filter(todo => todo.completed)
+    default:
+      return [...state]
+  }
 }
 
-const testToggleTodo = () => {
-  const stateBefore = [
-    {
-      id: 0,
-      text: 'Learn Redux',
-      completed: false,
-    },
-    {
-      id: 1,
-      text: 'Implement toggle test todo function',
-      completed: false,
-    }    
-  ]
-  const action = {
-    type: 'TOGGLE_TODO',
-    id: 1
-  };
-  const stateAfter = [
-    {
-      id: 0,
-      text: 'Learn Redux',
-      completed: false
-    },
-    {
-      id: 1,
-      text: 'Implement toggle test todo function',
-      completed: true
-    }
-  ]
+const todoApp = combineReducers({
+  todos,
+  visibility
+});
 
-  deepFreeze(stateBefore);
-  deepFreeze(action);
-
-  expect(
-    todos(stateBefore, action)
-  ).toEqual(stateAfter);
-}
-
-testAddTodo();
-testToggleTodo();
-console.log("Tests passed ✅")
+const store = createStore(todoApp);
+store.dispatch({
+  type: 'ADD_TODO',
+  id: 0,
+  text: 'Dispatching Todo',
+})
+store.dispatch({
+  type: 'ADD_TODO',
+  id: 1,
+  text: 'Dispatching another Todo',
+})
+store.dispatch({
+  type: 'TOGGLE_TODO',
+  id: 0,
+})
+store.dispatch({
+  type: 'SET_VISIBILITY_FILTER',
+  filter: 'SHOW_ALL'
+})
+console.log(store.getState());
